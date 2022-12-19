@@ -1,2 +1,2 @@
-# modulo02
+# módulo 02
 projeto final da disciplina Programação Orientada a Objetos I
