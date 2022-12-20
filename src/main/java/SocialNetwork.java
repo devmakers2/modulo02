@@ -1,16 +1,21 @@
 package main.java;
 
-import main.java.exceptions.*;
+import main.java.exceptions.EmptyFieldException;
+import main.java.exceptions.InvalidPasswordException;
+import main.java.exceptions.NoRegisteredUsersException;
+import main.java.exceptions.UsernameNotFoundException;
+import main.java.exceptions.UsernameNotAvailableException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class SocialNetwork {
 	private List<Post> posts = new ArrayList<>();
 	private List<Profile> profiles = new ArrayList<>();
 
-	public void run() {
+	protected void run() {
 		System.out.println("escolha uma opção:");
 		System.out.println("\"C\" para cadastrar-se");
 		System.out.println("\"E\" para entrar");
@@ -30,8 +35,8 @@ public class SocialNetwork {
 			case 'E':
 				try {
 					Profile profile = login();
-					userMenu(profile);
-				} catch (NoRegisteredUsersException | UserNotFoundException | InvalidPasswordException e) {
+					loggedUserMenu(profile);
+				} catch (NoRegisteredUsersException | UsernameNotFoundException | InvalidPasswordException e) {
 					System.out.println(e.getMessage());
 				}
 				break;
@@ -107,10 +112,10 @@ public class SocialNetwork {
 			}
 		}
 		
-		throw new UserNotFoundException();
+		throw new UsernameNotFoundException();
 	}
 	
-	private void userMenu(Profile profile) {
+	private void loggedUserMenu(Profile profile) {
 		System.out.println("----------");
 		System.out.println("Bem-vindo, " + profile.getName() + ".");
 		
@@ -126,12 +131,16 @@ public class SocialNetwork {
 			switch (option) {
 				case 'P':
 					System.out.println("----------");
-					profile.addAPost();
+					Post newPost = profile.createPost();
+					this.posts.add(newPost);
 					System.out.println("==========");
 					break;
 				case 'T':
 					System.out.println("----------");
-					profile.printPosts();
+					List<Post> loggedUserPosts = this.posts.stream().
+							                                filter(post -> post.getAuthor().equals(profile.getUsername())).
+							                                collect(Collectors.toList());
+					this.printPosts(loggedUserPosts);
 					System.out.println("==========");
 					break;
 				case 'S':
@@ -140,6 +149,12 @@ public class SocialNetwork {
 					System.out.println("opção inválida");
 					System.out.println("----------");
 			}
+		}
+	}
+
+	private void printPosts(List<Post> posts) {
+		for (Post post : posts) {
+			System.out.println(post.getFormattedPost());
 		}
 	}
 }
