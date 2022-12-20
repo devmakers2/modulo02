@@ -1,12 +1,15 @@
 package main.java;
 
+import main.java.exceptions.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class SocialNetwork {
-	static List<Profile> profiles = new ArrayList<>();
-	
+	private List<Post> posts = new ArrayList<>();
+	private List<Profile> profiles = new ArrayList<>();
+
 	public void run() {
 		System.out.println("escolha uma opção:");
 		System.out.println("\"C\" para cadastrar-se");
@@ -20,27 +23,16 @@ public class SocialNetwork {
 			case 'C':
 				try {
 					registerProfile();
-				} catch (EmptyNameException e) {
-					System.out.println("o nome não pode ser vazio, tente novamente");
-				} catch (EmptyUsernameException e) {
-					System.out.println("o login não pode ser vazio, tente novamente");
-				} catch (UsernameNotAvailableException e) {
-					System.out.println("o login escolhido já está sendo usado, tente novamente");
-				} catch (EmptyPasswordException e) {
-					System.out.println("a senha não pode ser vazia, tente novamente");
+				} catch (EmptyFieldException | UsernameNotAvailableException e) {
+					System.out.println(e.getMessage());
 				}
 				break;
 			case 'E':
 				try {
 					Profile profile = login();
-					UserMenu(profile);
-				} catch (NoRegisteredUsersException e) {
-					System.out.println("Não há nenhum usuário cadastrado.");
-					System.out.println("Por favor efetue o cadastro antes de continuar.");
-				} catch (UserNotFoundException e) {
-					System.out.println("não há usuário com o nome informado");
-				} catch (InvalidPasswordException e) {
-					System.out.println("senha não corresponde à informada");
+					userMenu(profile);
+				} catch (NoRegisteredUsersException | UserNotFoundException | InvalidPasswordException e) {
+					System.out.println(e.getMessage());
 				}
 				break;
 			case 'F':
@@ -54,7 +46,7 @@ public class SocialNetwork {
 		run();
 	}
 
-	private static void registerProfile() {
+	private void registerProfile() {
 		Scanner scanner = new Scanner(System.in);		
 
 		System.out.println("----------");
@@ -62,30 +54,30 @@ public class SocialNetwork {
 		System.out.print("nome: ");
 		String name = scanner.nextLine();
 		if (name.isEmpty()) {
-			throw new EmptyNameException();
+			throw new EmptyFieldException();
 		}
 		
-		System.out.print("login: ");
+		System.out.print("nome de usuário: ");
 		String username = scanner.nextLine();
 		if (username.isEmpty()) {
-			throw new EmptyUsernameException();
+			throw new EmptyFieldException();
 		}
 		
-		if (profiles.stream().anyMatch(u -> u.getUsername().equals(username))) {
+		if (profiles.stream().anyMatch(profile -> profile.getUsername().equals(username))) {
 			throw new UsernameNotAvailableException();
 		}
 		
 		System.out.print("senha: ");
 		String password = scanner.nextLine();
 		if (password.isEmpty()) {
-			throw new EmptyPasswordException();
+			throw new EmptyFieldException();
 		}
 
 		profiles.add(new Profile(name, username, password));
 		System.out.println("cadastro realizado com sucesso");
 	}
 	
-	private static Profile login() {
+	private Profile login() {
 		System.out.println("----------");
 
 		if (profiles.isEmpty()) {
@@ -94,14 +86,11 @@ public class SocialNetwork {
 		
 		Scanner scanner = new Scanner(System.in);
 		
-		System.out.print("digite seu login: ");
+		System.out.print("digite seu nome de usuário: ");
 		String username = scanner.nextLine();
 		
 		Profile profile = getProfileFromUsername(username);
-		if (profile == null) {
-			throw new UserNotFoundException();
-		}
-		
+
 		System.out.print("digite sua senha: ");
 		String password = scanner.nextLine();		
 		if (!profile.isPasswordEqualTo(password)) {
@@ -111,7 +100,7 @@ public class SocialNetwork {
 		return profile;		
 	}
 	
-	private static Profile getProfileFromUsername(String username) {		
+	private Profile getProfileFromUsername(String username) {
 		for (Profile profile : profiles) {
 			if (profile.getUsername().equals(username)) {
 				return profile;
@@ -121,7 +110,7 @@ public class SocialNetwork {
 		throw new UserNotFoundException();
 	}
 	
-	private static void UserMenu(Profile profile) {
+	private void userMenu(Profile profile) {
 		System.out.println("----------");
 		System.out.println("Bem-vindo, " + profile.getName() + ".");
 		
